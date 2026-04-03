@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
 // --- API Routes ---
 app.use('/api/upload',   require('./routes/uploadRoutes'));
 app.use('/api/classify', require('./routes/classifyRoutes'));
-// app.use('/api/extract',  require('./routes/extractRoutes'));
+app.use('/api/extract',  require('./routes/extractRoutes'));
 // app.use('/api/validate', require('./routes/validateRoutes'));
 // app.use('/api/screen',   require('./routes/screenRoutes'));
 // app.use('/api/score',    require('./routes/scoreRoutes'));
