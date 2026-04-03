@@ -29,11 +29,11 @@ app.get('/', (req, res) => {
   });
 });
 
-// --- API Routes (mounted as days progress) ---
-// app.use('/api/upload',      require('./routes/uploadRoutes'));
-// app.use('/api/verify',      require('./routes/verifyRoutes'));
-// app.use('/api/report',      require('./routes/reportRoutes'));
-// app.use('/api/audit',       require('./routes/auditRoutes'));
+// --- API Routes ---
+app.use('/api/upload', require('./routes/uploadRoutes'));
+// app.use('/api/verify',  require('./routes/verifyRoutes'));
+// app.use('/api/report',  require('./routes/reportRoutes'));
+// app.use('/api/audit',   require('./routes/auditRoutes'));
 
 // --- 404 Handler ---
 app.use((req, res) => {
