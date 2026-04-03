@@ -1,12 +1,13 @@
 // server.js
 // Entry point for the SurakshID backend server.
 // Initializes Express, connects to MongoDB, registers middleware,
-// mounts all API routes, and starts the HTTP server.
+// mounts all API routes, initializes watchlist data, and starts the HTTP server.
 
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const { initWatchlists } = require('./services/watchlistService');
 
 dotenv.config();
 
@@ -22,11 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // --- Health Check Route ---
 app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'SurakshID API is running',
-    version: '1.0.0',
-  });
+  res.json({ success: true, message: 'SurakshID API is running', version: '1.0.0' });
 });
 
 // --- Watchlist Status Route ---
@@ -40,7 +37,7 @@ app.use('/api/upload',   require('./routes/uploadRoutes'));
 app.use('/api/classify', require('./routes/classifyRoutes'));
 app.use('/api/extract',  require('./routes/extractRoutes'));
 app.use('/api/validate', require('./routes/validateRoutes'));
-// app.use('/api/screen',   require('./routes/screenRoutes'));
+app.use('/api/screen',   require('./routes/screenRoutes'));
 // app.use('/api/score',    require('./routes/scoreRoutes'));
 // app.use('/api/report',   require('./routes/reportRoutes'));
 // app.use('/api/audit',    require('./routes/auditRoutes'));
@@ -56,8 +53,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Internal server error', error: err.message });
 });
 
-// --- Start Server ---
+// --- Start Server then Initialize Watchlists ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`SurakshID server running on port ${PORT}`);
+  await initWatchlists();
 });
