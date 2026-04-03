@@ -29,6 +29,12 @@ app.get('/', (req, res) => {
   });
 });
 
+// --- Watchlist Status Route ---
+app.get('/api/watchlist-status', (req, res) => {
+  const { getWatchlistStatus } = require('./services/watchlistService');
+  res.json({ success: true, data: getWatchlistStatus() });
+});
+
 // --- API Routes ---
 app.use('/api/upload',   require('./routes/uploadRoutes'));
 app.use('/api/classify', require('./routes/classifyRoutes'));
