@@ -34,15 +34,25 @@ const app = express();
 connectDB();
 
 // --- Core Middleware ---
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://suraksh-id.vercel.app',
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://suraksh-id.vercel.app',
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
+
+// Handle preflight OPTIONS requests for all routes
+app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
