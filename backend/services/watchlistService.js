@@ -1,7 +1,7 @@
 // services/watchlistService.js
 // Watchlist data layer for AML screening.
 // Manages two data sources — both free, no API key required:
-//   1. OFAC Consolidated Sanctions List — CSV format
+//   1. OFAC Consolidated Sanctions List — CSV format (no header row, indexed by column position)
 //   2. UN Security Council Consolidated Sanctions List — XML format
 //
 // Environment behaviour:
@@ -105,6 +105,8 @@ const getUnXmlData = async () => {
 };
 
 // ─── Load OFAC CSV ────────────────────────────────────────────────────────────
+// OFAC consolidated CSV has no header row.
+// Column positions: 0 = entity number, 1 = name, 2 = type, 3 = program, 5 = remarks
 const loadOfacList = async () => {
   const csvData = await getOfacCsvData();
 
@@ -112,29 +114,21 @@ const loadOfacList = async () => {
     parse(
       csvData,
       {
-        columns:             true,
-        skip_empty_lines:    true,
-        trim:                true,
-        relax_column_count:  true,
+        skip_empty_lines:   true,
+        trim:               true,
+        relax_column_count: true,
       },
       (err, records) => {
         if (err) return reject(new Error(`OFAC CSV parse error: ${err.message}`));
 
         ofacEntries = records
-          .map((r) => {
-            const name =
-              r.Name ||
-              r.name ||
-              [r['First Name'], r['Last Name']].filter(Boolean).join(' ') ||
-              '';
-            return {
-              name:       name.trim(),
-              type:       r.Type || r['SDN Type'] || '',
-              program:    r.Program || r.program || '',
-              remarks:    r.Remarks || r.remarks || '',
-              listSource: 'OFAC Consolidated',
-            };
-          })
+          .map((r) => ({
+            name:       (r[1] || '').trim(),
+            type:       (r[2] || '').trim(),
+            program:    (r[3] || '').trim(),
+            remarks:    (r[5] || '').trim(),
+            listSource: 'OFAC Consolidated',
+          }))
           .filter((e) => e.name.length > 0);
 
         lastOfacRefresh = new Date();
@@ -232,8 +226,8 @@ const loadUnList = async () => {
     console.warn('[Watchlist] Could not parse UN entities section:', e.message);
   }
 
-  unEntries      = entries.filter((e) => e.name.length > 0);
-  lastUnRefresh  = new Date();
+  unEntries     = entries.filter((e) => e.name.length > 0);
+  lastUnRefresh = new Date();
   console.log(
     `[Watchlist] UN list loaded: ${unEntries.length} entries. ` +
     `Refreshed: ${lastUnRefresh.toISOString()}`
