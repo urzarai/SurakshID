@@ -1,12 +1,13 @@
 // server.js
 // Entry point for the SurakshID backend server.
-// Initializes Express, connects to MongoDB, registers middleware,
-// mounts all API routes, initializes watchlist data, and starts the HTTP server.
+// Initializes Express, connects to MongoDB, registers all middleware,
+// mounts all API routes, loads watchlist data, and starts the HTTP server.
+// This is the final backend version — all routes are active.
 
 const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');
+const cors    = require('cors');
+const dotenv  = require('dotenv');
+const connectDB        = require('./config/db');
 const { initWatchlists } = require('./services/watchlistService');
 
 dotenv.config();
@@ -21,12 +22,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- Health Check Route ---
+// --- Health Check ---
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'SurakshID API is running', version: '1.0.0' });
 });
 
-// --- Watchlist Status Route ---
+// --- Watchlist Status ---
 app.get('/api/watchlist-status', (req, res) => {
   const { getWatchlistStatus } = require('./services/watchlistService');
   res.json({ success: true, data: getWatchlistStatus() });
@@ -40,7 +41,7 @@ app.use('/api/validate', require('./routes/validateRoutes'));
 app.use('/api/screen',   require('./routes/screenRoutes'));
 app.use('/api/score',    require('./routes/scoreRoutes'));
 app.use('/api/report',   require('./routes/reportRoutes'));
-// app.use('/api/audit',    require('./routes/auditRoutes'));
+app.use('/api/audit',    require('./routes/auditRoutes'));
 
 // --- 404 Handler ---
 app.use((req, res) => {
@@ -50,7 +51,11 @@ app.use((req, res) => {
 // --- Global Error Handler ---
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message);
-  res.status(500).json({ success: false, message: 'Internal server error', error: err.message });
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error',
+    error: err.message,
+  });
 });
 
 // --- Start Server then Initialize Watchlists ---
