@@ -34,8 +34,8 @@ let lastUnRefresh   = null;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 // ─── Local file paths (development only) ─────────────────────────────────────
-const OFAC_CSV_PATH = path.join(__dirname, '..', 'data', 'ofac_consolidated.csv.csv');
-const UN_XML_PATH   = path.join(__dirname, '..', 'data', 'un_consolidated.xml.xml');
+const OFAC_CSV_PATH = path.join(__dirname, '..', 'data', 'ofac_consolidated.csv');
+const UN_XML_PATH   = path.join(__dirname, '..', 'data', 'un_consolidated.xml');
 
 // ─── Generic HTTP/HTTPS downloader (production only) ─────────────────────────
 const downloadFile = (url) => {
