@@ -58,3 +58,7 @@ export const getVerificationById = (verificationId) =>
 
 export const getWatchlistStatus = () =>
   api.get('/api/watchlist-status');
+
+// Pings the backend to wake it up if it has spun down on Render free tier
+export const pingBackend = () =>
+  api.get('/').catch(() => null); // silently ignore errors
