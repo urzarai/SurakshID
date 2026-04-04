@@ -33,27 +33,13 @@ app.get('/api/watchlist-status', (req, res) => {
 });
 
 // --- API Routes ---
-const uploadRoutes   = require('./routes/uploadRoutes');
-const classifyRoutes = require('./routes/classifyRoutes');
-const extractRoutes  = require('./routes/extractRoutes');
-const validateRoutes = require('./routes/validateRoutes');
-const screenRoutes   = require('./routes/screenRoutes');
-const scoreRoutes    = require('./routes/scoreRoutes');
-
-console.log('uploadRoutes type:',   typeof uploadRoutes);
-console.log('classifyRoutes type:', typeof classifyRoutes);
-console.log('extractRoutes type:',  typeof extractRoutes);
-console.log('validateRoutes type:', typeof validateRoutes);
-console.log('screenRoutes type:',   typeof screenRoutes);
-console.log('scoreRoutes type:',    typeof scoreRoutes);
-
-app.use('/api/upload',   uploadRoutes);
-app.use('/api/classify', classifyRoutes);
-app.use('/api/extract',  extractRoutes);
-app.use('/api/validate', validateRoutes);
-app.use('/api/screen',   screenRoutes);
-app.use('/api/score',    scoreRoutes);
-// app.use('/api/report',   require('./routes/reportRoutes'));
+app.use('/api/upload',   require('./routes/uploadRoutes'));
+app.use('/api/classify', require('./routes/classifyRoutes'));
+app.use('/api/extract',  require('./routes/extractRoutes'));
+app.use('/api/validate', require('./routes/validateRoutes'));
+app.use('/api/screen',   require('./routes/screenRoutes'));
+app.use('/api/score',    require('./routes/scoreRoutes'));
+app.use('/api/report',   require('./routes/reportRoutes'));
 // app.use('/api/audit',    require('./routes/auditRoutes'));
 
 // --- 404 Handler ---
