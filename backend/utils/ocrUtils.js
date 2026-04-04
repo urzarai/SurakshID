@@ -4,23 +4,35 @@
 // then each page is OCR'd by Tesseract and joined into one string.
 // Images are passed directly to Tesseract.
 // Falls back to PSM 6 if primary extraction returns minimal text.
+// Binary paths are set based on OS — Windows uses hardcoded path,
+// Linux (Render) uses the system-installed tesseract binary.
 
 const tesseract = require('node-tesseract-ocr');
 const path      = require('path');
 const fs        = require('fs');
+const os        = require('os');
+
+// On Windows use hardcoded path, on Linux let it use system PATH
+const TESSERACT_BINARY = os.platform() === 'win32'
+  ? '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"'
+  : 'tesseract';
+
+const POPPLER_BIN = os.platform() === 'win32'
+  ? 'C:\\poppler\\poppler-25.12.0\\Library\\bin\\pdftoppm.exe'
+  : 'pdftoppm';
 
 const OCR_CONFIG_PRIMARY = {
   lang:   'eng',
   oem:    1,
   psm:    3,
-  binary: '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"',
+  binary: TESSERACT_BINARY,
 };
 
 const OCR_CONFIG_FALLBACK = {
   lang:   'eng',
   oem:    1,
   psm:    6,
-  binary: '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"',
+  binary: TESSERACT_BINARY,
 };
 
 // ─── OCR a single image file ──────────────────────────────────────────────────
@@ -48,12 +60,11 @@ const extractTextFromPdf = async (filePath) => {
     out_dir:    outputDir,
     out_prefix: baseName + '_page',
     page:       null,
-    bin:        'C:\\poppler\\poppler-25.12.0\\Library\\bin\\pdftoppm.exe',
+    bin:        POPPLER_BIN,
   };
 
   await poppler.convert(filePath, opts);
 
-  // Collect all generated page images
   const pageImages = fs
     .readdirSync(outputDir)
     .filter((f) => f.startsWith(baseName + '_page') && f.endsWith('.png'))
@@ -64,7 +75,6 @@ const extractTextFromPdf = async (filePath) => {
     throw new Error('PDF conversion produced no images. Check Poppler installation.');
   }
 
-  // OCR each page and clean up the image after
   const pageTexts = [];
   for (const imgPath of pageImages) {
     const text = await ocrImage(imgPath);

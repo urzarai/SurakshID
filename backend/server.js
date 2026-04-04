@@ -12,6 +12,22 @@ const { initWatchlists } = require('./services/watchlistService');
 
 dotenv.config();
 
+// Ensure required directories exist on server startup
+const fs   = require('fs');
+const path = require('path');
+
+const requiredDirs = [
+  path.join(__dirname, 'uploads'),
+  path.join(__dirname, 'reports'),
+];
+
+requiredDirs.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`Created directory: ${dir}`);
+  }
+});
+
 const app = express();
 
 // Connect to MongoDB
