@@ -236,4 +236,45 @@ const getAuditStats = async (req, res) => {
   }
 };
 
-module.exports = { getAuditLog, getVerificationById, getAuditStats };
+/**
+ * clearAuditLog
+ * DELETE /api/audit/clear
+ * Deletes all verification records from MongoDB.
+ * Optionally filter by riskBand to clear only specific records.
+ */
+const clearAuditLog = async (req, res) => {
+  try {
+    const { riskBand, confirmClear } = req.body;
+
+    // Safety check — require explicit confirmation
+    if (!confirmClear || confirmClear !== 'CONFIRM') {
+      return res.status(400).json({
+        success: false,
+        message: 'Send { "confirmClear": "CONFIRM" } in the request body to proceed.',
+      });
+    }
+
+    const filter = {};
+    if (riskBand) filter.riskBand = riskBand;
+
+    const result = await Verification.deleteMany(filter);
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully deleted ${result.deletedCount} verification record${result.deletedCount !== 1 ? 's' : ''}.`,
+      data: {
+        deletedCount: result.deletedCount,
+        filter: riskBand ? { riskBand } : 'all records',
+      },
+    });
+  } catch (error) {
+    console.error('clearAuditLog error:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to clear audit log.',
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { getAuditLog, getVerificationById, getAuditStats, clearAuditLog };

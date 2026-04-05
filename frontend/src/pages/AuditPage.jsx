@@ -8,28 +8,28 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuditLog, getAuditStats } from '../services/api';
+import { getAuditLog, getAuditStats, clearAuditLog } from '../services/api';
 import Loader from '../components/Loader';
 
 // ─── Risk band helpers ────────────────────────────────────────────────────────
 const riskClass = (band) => {
-  if (band === 'Low')    return 'low';
+  if (band === 'Low') return 'low';
   if (band === 'Medium') return 'medium';
-  if (band === 'High')   return 'high';
+  if (band === 'High') return 'high';
   return 'neutral';
 };
 
 // ─── Status badge colour ──────────────────────────────────────────────────────
 const statusClass = (status) => {
   if (status === 'complete') return 'low';
-  if (status === 'scored')   return 'medium';
+  if (status === 'scored') return 'medium';
   return 'neutral';
 };
 
 // ─── Document types and risk bands for filter dropdowns ───────────────────────
 const DOCUMENT_TYPES = [
   'Passport',
-  'National ID',
+  'Aadhaar Card',
   'PAN Card',
   'Utility Bill',
   'Company Registration Certificate',
@@ -69,23 +69,27 @@ export default function AuditPage() {
   const navigate = useNavigate();
 
   // ── Stats state ──────────────────────────────────────────────────────────────
-  const [stats, setStats]           = useState(null);
+  const [stats, setStats]               = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
   // ── Table state ──────────────────────────────────────────────────────────────
-  const [records, setRecords]       = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [records, setRecords]           = useState([]);
+  const [pagination, setPagination]     = useState(null);
   const [tableLoading, setTableLoading] = useState(true);
-  const [error, setError]           = useState('');
+  const [error, setError]               = useState('');
+
+  // ── Clear state ───────────────────────────────────────────────────────────────
+  const [clearing, setClearing]         = useState(false);
+  const [clearSuccess, setClearSuccess] = useState('');
 
   // ── Filter state ─────────────────────────────────────────────────────────────
-  const [search, setSearch]         = useState('');
-  const [riskBand, setRiskBand]     = useState('');
+  const [search, setSearch]             = useState('');
+  const [riskBand, setRiskBand]         = useState('');
   const [documentType, setDocumentType] = useState('');
-  const [status, setStatus]         = useState('');
-  const [startDate, setStartDate]   = useState('');
-  const [endDate, setEndDate]       = useState('');
-  const [page, setPage]             = useState(1);
+  const [status, setStatus]             = useState('');
+  const [startDate, setStartDate]       = useState('');
+  const [endDate, setEndDate]           = useState('');
+  const [page, setPage]                 = useState(1);
   const LIMIT = 10;
 
   // ── Fetch stats ───────────────────────────────────────────────────────────────
@@ -151,6 +155,31 @@ export default function AuditPage() {
   const hasActiveFilters =
     search || riskBand || documentType || status || startDate || endDate;
 
+  // ── Clear audit logs ──────────────────────────────────────────────────────────
+  const handleClearLogs = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete ALL verification records? This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    setClearing(true);
+    setClearSuccess('');
+    setError('');
+    try {
+      const res = await clearAuditLog();
+      setClearSuccess(res.data.message);
+      setRecords([]);
+      setPagination(null);
+      // Refresh stats after clearing
+      const statsRes = await getAuditStats();
+      setStats(statsRes.data.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to clear audit log.');
+    } finally {
+      setClearing(false);
+    }
+  };
+
   return (
     <div className="page-content">
       <div className="bg-glow" />
@@ -209,10 +238,7 @@ export default function AuditPage() {
         ) : null}
 
         {/* ── Filters ── */}
-        <div
-          className="card"
-          style={{ marginBottom: '20px' }}
-        >
+        <div className="card" style={{ marginBottom: '20px' }}>
           <div className="card-header">
             <span className="card-title">Filters</span>
             {hasActiveFilters && (
@@ -322,21 +348,48 @@ export default function AuditPage() {
           </div>
         )}
 
+        {/* ── Clear Success ── */}
+        {clearSuccess && (
+          <div className="alert alert-success" style={{ marginBottom: '16px' }}>
+            <span>✓</span>
+            <span>{clearSuccess}</span>
+          </div>
+        )}
+
         {/* ── Table ── */}
         <div className="card" style={{ marginBottom: '48px' }}>
           <div className="card-header">
             <span className="card-title">Verification Records</span>
-            {pagination && (
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--color-text-muted)',
-                  fontWeight: 500,
-                }}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {pagination && (
+                <span
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--color-text-muted)',
+                    fontWeight: 500,
+                  }}
+                >
+                  {pagination.total} total record{pagination.total !== 1 ? 's' : ''}
+                </span>
+              )}
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={handleClearLogs}
+                disabled={clearing || records.length === 0}
               >
-                {pagination.total} total record{pagination.total !== 1 ? 's' : ''}
-              </span>
-            )}
+                {clearing ? (
+                  <>
+                    <div
+                      className="spinner"
+                      style={{ width: '12px', height: '12px', borderWidth: '2px' }}
+                    />
+                    Clearing...
+                  </>
+                ) : (
+                  '🗑 Clear All Logs'
+                )}
+              </button>
+            </div>
           </div>
 
           {tableLoading ? (
@@ -435,10 +488,10 @@ export default function AuditPage() {
                                 record.riskBand === 'Low'
                                   ? 'var(--color-risk-low)'
                                   : record.riskBand === 'Medium'
-                                  ? 'var(--color-risk-medium)'
-                                  : record.riskBand === 'High'
-                                  ? 'var(--color-risk-high)'
-                                  : 'var(--color-text-muted)',
+                                    ? 'var(--color-risk-medium)'
+                                    : record.riskBand === 'High'
+                                      ? 'var(--color-risk-high)'
+                                      : 'var(--color-text-muted)',
                             }}
                           >
                             {record.riskScore ?? '—'}
@@ -523,7 +576,6 @@ export default function AuditPage() {
                     >
                       ← Prev
                     </button>
-                    {/* Page number buttons */}
                     {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
                       .filter(
                         (p) =>

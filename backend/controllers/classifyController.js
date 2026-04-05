@@ -11,7 +11,7 @@ const { callGroq } = require('../utils/groqClient');
 // The exact document types the LLM must choose from
 const VALID_DOCUMENT_TYPES = [
   'Passport',
-  'National ID',
+  'Aadhaar Card',
   'PAN Card',
   'Utility Bill',
   'Company Registration Certificate',

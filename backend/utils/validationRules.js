@@ -7,7 +7,7 @@
 // along with an overall pass/fail status.
 // fuse.js is used for fuzzy name matching across documents.
 
-const Fuse = require('fuse.js');
+const Fuse = require("fuse.js");
 
 // ─── Helper: parse a date string into a JS Date object ───────────────────────
 // Handles formats: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY, MM/DD/YYYY
@@ -23,7 +23,9 @@ const parseDate = (dateStr) => {
   // DD/MM/YYYY or DD-MM-YYYY
   const dmyMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if (dmyMatch) {
-    d = new Date(`${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`);
+    d = new Date(
+      `${dmyMatch[3]}-${dmyMatch[2].padStart(2, "0")}-${dmyMatch[1].padStart(2, "0")}`,
+    );
     if (!isNaN(d)) return d;
   }
 
@@ -35,61 +37,92 @@ const parseDate = (dateStr) => {
 // Applies to: Passport, National ID, Bank Statement
 const checkExpiry = (extractedFields, documentType) => {
   const expiryFieldMap = {
-    Passport: 'expiryDate',
-    'National ID': 'expiryDate',
-    'Bank Statement': null, // no expiry on bank statements
+    Passport: "expiryDate",
+    "National ID": "expiryDate",
+    "Bank Statement": null, // no expiry on bank statements
   };
 
   // Document types that don't have an expiry field — auto pass
-  const noExpiryTypes = ['PAN Card', 'Utility Bill', 'Company Registration Certificate', 'Bank Statement'];
+  const noExpiryTypes = [
+    "PAN Card",
+    "Aadhaar Card",
+    "Utility Bill",
+    "Company Registration Certificate",
+    "Bank Statement",
+  ];
   if (noExpiryTypes.includes(documentType)) {
-    return { field: 'expiryDate', status: 'pass', reason: `${documentType} does not have an expiry date.` };
+    return {
+      field: "expiryDate",
+      status: "pass",
+      reason: `${documentType} does not have an expiry date.`,
+    };
   }
 
   const expiryValue = extractedFields?.expiryDate;
 
   if (!expiryValue) {
-    return { field: 'expiryDate', status: 'fail', reason: 'Expiry date is missing from the document.' };
+    return {
+      field: "expiryDate",
+      status: "fail",
+      reason: "Expiry date is missing from the document.",
+    };
   }
 
   const expiryDate = parseDate(expiryValue);
   if (!expiryDate) {
-    return { field: 'expiryDate', status: 'fail', reason: `Could not parse expiry date: "${expiryValue}".` };
+    return {
+      field: "expiryDate",
+      status: "fail",
+      reason: `Could not parse expiry date: "${expiryValue}".`,
+    };
   }
 
   const today = new Date();
   if (expiryDate < today) {
     return {
-      field: 'expiryDate',
-      status: 'fail',
+      field: "expiryDate",
+      status: "fail",
       reason: `Document expired on ${expiryValue}. Expired documents cannot be accepted for KYC.`,
     };
   }
 
-  return { field: 'expiryDate', status: 'pass', reason: `Document is valid until ${expiryValue}.` };
+  return {
+    field: "expiryDate",
+    status: "pass",
+    reason: `Document is valid until ${expiryValue}.`,
+  };
 };
 
 // ─── Rule 2: Age Verification ─────────────────────────────────────────────────
 // Customer must be 18 years or older based on date of birth.
 // Applies to all personal documents (not Company Registration).
 const checkAge = (extractedFields, documentType) => {
-  if (documentType === 'Company Registration Certificate') {
-    return { field: 'dateOfBirth', status: 'pass', reason: 'Age check not applicable for company documents.' };
+  if (documentType === "Company Registration Certificate") {
+    return {
+      field: "dateOfBirth",
+      status: "pass",
+      reason: "Age check not applicable for company documents.",
+    };
   }
 
   // Field name varies by document type
-  const dobValue =
-    extractedFields?.dateOfBirth ||
-    extractedFields?.dob ||
-    null;
+  const dobValue = extractedFields?.dateOfBirth || extractedFields?.dob || null;
 
   if (!dobValue) {
-    return { field: 'dateOfBirth', status: 'fail', reason: 'Date of birth is missing from the document.' };
+    return {
+      field: "dateOfBirth",
+      status: "fail",
+      reason: "Date of birth is missing from the document.",
+    };
   }
 
   const dob = parseDate(dobValue);
   if (!dob) {
-    return { field: 'dateOfBirth', status: 'fail', reason: `Could not parse date of birth: "${dobValue}".` };
+    return {
+      field: "dateOfBirth",
+      status: "fail",
+      reason: `Could not parse date of birth: "${dobValue}".`,
+    };
   }
 
   const today = new Date();
@@ -101,58 +134,87 @@ const checkAge = (extractedFields, documentType) => {
 
   if (age < 18) {
     return {
-      field: 'dateOfBirth',
-      status: 'fail',
+      field: "dateOfBirth",
+      status: "fail",
       reason: `Customer is ${age} years old. Must be at least 18 years old for KYC.`,
     };
   }
 
-  return { field: 'dateOfBirth', status: 'pass', reason: `Customer is ${age} years old. Age requirement met.` };
+  return {
+    field: "dateOfBirth",
+    status: "pass",
+    reason: `Customer is ${age} years old. Age requirement met.`,
+  };
 };
 
 // ─── Rule 3: PAN Number Format ────────────────────────────────────────────────
 // PAN must match the Indian PAN format: AAAAA9999A
 // Only applies to PAN Card documents.
 const checkPanFormat = (extractedFields, documentType) => {
-  if (documentType !== 'PAN Card') {
-    return { field: 'panNumber', status: 'pass', reason: 'PAN format check not applicable for this document type.' };
+  if (documentType !== "PAN Card") {
+    return {
+      field: "panNumber",
+      status: "pass",
+      reason: "PAN format check not applicable for this document type.",
+    };
   }
 
   const panValue = extractedFields?.panNumber;
 
   if (!panValue) {
-    return { field: 'panNumber', status: 'fail', reason: 'PAN number is missing from the document.' };
+    return {
+      field: "panNumber",
+      status: "fail",
+      reason: "PAN number is missing from the document.",
+    };
   }
 
   const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
   if (!PAN_REGEX.test(panValue.trim().toUpperCase())) {
     return {
-      field: 'panNumber',
-      status: 'fail',
+      field: "panNumber",
+      status: "fail",
       reason: `PAN number "${panValue}" does not match the required format AAAAA9999A.`,
     };
   }
 
-  return { field: 'panNumber', status: 'pass', reason: `PAN number "${panValue}" is in valid format.` };
+  return {
+    field: "panNumber",
+    status: "pass",
+    reason: `PAN number "${panValue}" is in valid format.`,
+  };
 };
 
 // ─── Rule 4: Address Proof Recency ───────────────────────────────────────────
 // Utility bills must be dated within the last 90 days.
 // Only applies to Utility Bill documents.
 const checkAddressProofRecency = (extractedFields, documentType) => {
-  if (documentType !== 'Utility Bill') {
-    return { field: 'billDate', status: 'pass', reason: 'Address proof recency check not applicable for this document type.' };
+  if (documentType !== "Utility Bill") {
+    return {
+      field: "billDate",
+      status: "pass",
+      reason:
+        "Address proof recency check not applicable for this document type.",
+    };
   }
 
   const billDateValue = extractedFields?.billDate;
 
   if (!billDateValue) {
-    return { field: 'billDate', status: 'fail', reason: 'Bill date is missing from the utility bill.' };
+    return {
+      field: "billDate",
+      status: "fail",
+      reason: "Bill date is missing from the utility bill.",
+    };
   }
 
   const billDate = parseDate(billDateValue);
   if (!billDate) {
-    return { field: 'billDate', status: 'fail', reason: `Could not parse bill date: "${billDateValue}".` };
+    return {
+      field: "billDate",
+      status: "fail",
+      reason: `Could not parse bill date: "${billDateValue}".`,
+    };
   }
 
   const today = new Date();
@@ -161,13 +223,17 @@ const checkAddressProofRecency = (extractedFields, documentType) => {
 
   if (billDate < ninetyDaysAgo) {
     return {
-      field: 'billDate',
-      status: 'fail',
+      field: "billDate",
+      status: "fail",
       reason: `Utility bill dated ${billDateValue} is older than 90 days. A recent bill is required for address proof.`,
     };
   }
 
-  return { field: 'billDate', status: 'pass', reason: `Utility bill dated ${billDateValue} is within the last 90 days.` };
+  return {
+    field: "billDate",
+    status: "pass",
+    reason: `Utility bill dated ${billDateValue} is within the last 90 days.`,
+  };
 };
 
 // ─── Rule 5: Name Consistency ─────────────────────────────────────────────────
@@ -185,9 +251,10 @@ const checkNameConsistency = (extractedFields, documentType) => {
 
   if (nameFields.length < 2) {
     return {
-      field: 'nameConsistency',
-      status: 'pass',
-      reason: 'Only one name field found — cross-document name consistency check skipped.',
+      field: "nameConsistency",
+      status: "pass",
+      reason:
+        "Only one name field found — cross-document name consistency check skipped.",
     };
   }
 
@@ -203,16 +270,16 @@ const checkNameConsistency = (extractedFields, documentType) => {
     // fuse score: 0 = perfect, higher = worse. We want score < 0.4 to pass.
     if (results.length === 0 || results[0].score > 0.4) {
       return {
-        field: 'nameConsistency',
-        status: 'fail',
+        field: "nameConsistency",
+        status: "fail",
         reason: `Name mismatch detected: "${primaryName}" vs "${nameFields[i]}". Names across documents must match.`,
       };
     }
   }
 
   return {
-    field: 'nameConsistency',
-    status: 'pass',
+    field: "nameConsistency",
+    status: "pass",
     reason: `All name fields are consistent: "${nameFields.join('", "')}".`,
   };
 };
@@ -222,36 +289,50 @@ const checkNameConsistency = (extractedFields, documentType) => {
 // Required fields are defined per document type.
 const checkCompleteness = (extractedFields, documentType) => {
   const requiredFieldsMap = {
-    Passport: ['fullName', 'dateOfBirth', 'passportNumber', 'expiryDate', 'nationality'],
-    'National ID': ['fullName', 'dateOfBirth', 'idNumber'],
-    'PAN Card': ['fullName', 'dateOfBirth', 'panNumber'],
-    'Utility Bill': ['nameOnBill', 'address', 'billDate', 'serviceProvider'],
-    'Company Registration Certificate': ['companyName', 'registrationNumber', 'dateOfIncorporation'],
-    'Bank Statement': ['accountHolderName', 'accountNumber', 'bankName'],
+    Passport: [
+      "fullName",
+      "dateOfBirth",
+      "passportNumber",
+      "expiryDate",
+      "nationality",
+    ],
+    "Aadhaar Card": ["fullName", "dateOfBirth", "aadhaarNumber"],
+    "PAN Card": ["fullName", "dateOfBirth", "panNumber"],
+    "Utility Bill": ["nameOnBill", "address", "billDate", "serviceProvider"],
+    "Company Registration Certificate": [
+      "companyName",
+      "registrationNumber",
+      "dateOfIncorporation",
+    ],
+    "Bank Statement": ["accountHolderName", "accountNumber", "bankName"],
   };
 
   const required = requiredFieldsMap[documentType];
 
   if (!required) {
-    return { field: 'completeness', status: 'pass', reason: 'No completeness rules defined for this document type.' };
+    return {
+      field: "completeness",
+      status: "pass",
+      reason: "No completeness rules defined for this document type.",
+    };
   }
 
   const missingFields = required.filter((field) => {
     const value = extractedFields?.[field];
-    return value === null || value === undefined || value === '';
+    return value === null || value === undefined || value === "";
   });
 
   if (missingFields.length > 0) {
     return {
-      field: 'completeness',
-      status: 'fail',
-      reason: `Missing required fields: ${missingFields.join(', ')}.`,
+      field: "completeness",
+      status: "fail",
+      reason: `Missing required fields: ${missingFields.join(", ")}.`,
     };
   }
 
   return {
-    field: 'completeness',
-    status: 'pass',
+    field: "completeness",
+    status: "pass",
     reason: `All required fields are present for ${documentType}.`,
   };
 };
@@ -275,9 +356,9 @@ const runAllValidations = (extractedFields, documentType) => {
   ];
 
   // Overall status: 'failed' if any rule fails, 'passed' if all pass
-  const validationStatus = validationReport.some((r) => r.status === 'fail')
-    ? 'failed'
-    : 'passed';
+  const validationStatus = validationReport.some((r) => r.status === "fail")
+    ? "failed"
+    : "passed";
 
   return { validationReport, validationStatus };
 };

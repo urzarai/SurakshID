@@ -7,7 +7,6 @@
 // Company Registration Certificate, Bank Statement.
 
 const EXTRACTION_PROMPTS = {
-
   Passport: {
     systemPrompt: `You are a KYC document parser for a financial institution.
 Extract structured data from OCR text of a Passport.
@@ -31,26 +30,23 @@ Return exactly this structure:
 }`,
   },
 
-  'National ID': {
+  "Aadhaar Card": {
     systemPrompt: `You are a KYC document parser for a financial institution.
-Extract structured data from OCR text of a National ID card.
+Extract structured data from OCR text of an Indian Aadhaar Card.
 Respond ONLY with a valid JSON object — no explanation, no markdown, no extra text.
 Use null for any field you cannot find.
 Return exactly this structure:
 {
   "fullName": null,
   "dateOfBirth": null,
-  "idNumber": null,
   "gender": null,
+  "aadhaarNumber": null,
   "address": null,
-  "issueDate": null,
-  "expiryDate": null,
-  "issuingAuthority": null,
-  "nationality": null
+  "pincode": null
 }`,
   },
 
-  'PAN Card': {
+  "PAN Card": {
     systemPrompt: `You are a KYC document parser for a financial institution.
 Extract structured data from OCR text of an Indian PAN Card.
 Respond ONLY with a valid JSON object — no explanation, no markdown, no extra text.
@@ -65,7 +61,7 @@ Return exactly this structure:
 }`,
   },
 
-  'Utility Bill': {
+  "Utility Bill": {
     systemPrompt: `You are a KYC document parser for a financial institution.
 Extract structured data from OCR text of a Utility Bill used as proof of address.
 Respond ONLY with a valid JSON object — no explanation, no markdown, no extra text.
@@ -88,7 +84,7 @@ Return exactly this structure:
 }`,
   },
 
-  'Company Registration Certificate': {
+  "Company Registration Certificate": {
     systemPrompt: `You are a KYC document parser for a financial institution.
 Extract structured data from OCR text of a Company Registration Certificate.
 Respond ONLY with a valid JSON object — no explanation, no markdown, no extra text.
@@ -105,7 +101,7 @@ Return exactly this structure:
 }`,
   },
 
-  'Bank Statement': {
+  "Bank Statement": {
     systemPrompt: `You are a KYC document parser for a financial institution.
 Extract structured data from OCR text of a Bank Statement.
 Respond ONLY with a valid JSON object — no explanation, no markdown, no extra text.
@@ -139,7 +135,9 @@ const getExtractionPrompt = (documentType, rawOcrText) => {
   const promptConfig = EXTRACTION_PROMPTS[documentType];
 
   if (!promptConfig) {
-    throw new Error(`No extraction prompt defined for document type: ${documentType}`);
+    throw new Error(
+      `No extraction prompt defined for document type: ${documentType}`,
+    );
   }
 
   const userPrompt = `Extract all fields from the following OCR text of a ${documentType}:

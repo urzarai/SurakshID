@@ -29,7 +29,7 @@ const PIPELINE_STEPS = [
 
 const DOCUMENT_TYPES = [
   'Passport',
-  'National ID',
+  'Aadhaar Card',
   'PAN Card',
   'Utility Bill',
   'Company Registration Certificate',

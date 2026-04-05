@@ -4,16 +4,16 @@
 // every stage of the pipeline: OCR text, extracted fields,
 // validation results, AML screening outcome, risk score, and report path.
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // --- Sub-schema: single validation rule result ---
 const ValidationResultSchema = new mongoose.Schema(
   {
     field: { type: String, required: true },
-    status: { type: String, enum: ['pass', 'fail'], required: true },
-    reason: { type: String, default: '' },
+    status: { type: String, enum: ["pass", "fail"], required: true },
+    reason: { type: String, default: "" },
   },
-  { _id: false }
+  { _id: false },
 );
 
 // --- Sub-schema: AML watchlist match result ---
@@ -25,7 +25,7 @@ const AMLResultSchema = new mongoose.Schema(
     matchScore: { type: Number, default: null },
     sanctionType: { type: String, default: null },
   },
-  { _id: false }
+  { _id: false },
 );
 
 // --- Sub-schema: individual risk rule that was triggered ---
@@ -33,9 +33,9 @@ const RiskBreakdownSchema = new mongoose.Schema(
   {
     rule: { type: String, required: true },
     pointsAdded: { type: Number, required: true },
-    reason: { type: String, default: '' },
+    reason: { type: String, default: "" },
   },
-  { _id: false }
+  { _id: false },
 );
 
 // --- Main Verification Schema ---
@@ -70,21 +70,21 @@ const VerificationSchema = new mongoose.Schema(
     documentType: {
       type: String,
       enum: [
-        'Passport',
-        'National ID',
-        'PAN Card',
-        'Utility Bill',
-        'Company Registration Certificate',
-        'Bank Statement',
-        'Unknown',
+        "Passport",
+        "Aadhaar Card",
+        "PAN Card",
+        "Utility Bill",
+        "Company Registration Certificate",
+        "Bank Statement",
+        "Unknown",
       ],
-      default: 'Unknown',
+      default: "Unknown",
     },
 
     // Raw text output from Tesseract OCR
     rawOcrText: {
       type: String,
-      default: '',
+      default: "",
     },
 
     // Structured fields extracted by Groq LLM (flexible — varies by document type)
@@ -102,8 +102,8 @@ const VerificationSchema = new mongoose.Schema(
     // Overall validation status derived from validationReport
     validationStatus: {
       type: String,
-      enum: ['pending', 'passed', 'failed'],
-      default: 'pending',
+      enum: ["pending", "passed", "failed"],
+      default: "pending",
     },
 
     // AML watchlist screening result
@@ -121,7 +121,7 @@ const VerificationSchema = new mongoose.Schema(
     // Risk band derived from score
     riskBand: {
       type: String,
-      enum: ['Low', 'Medium', 'High', null],
+      enum: ["Low", "Medium", "High", null],
       default: null,
     },
 
@@ -140,13 +140,21 @@ const VerificationSchema = new mongoose.Schema(
     // Overall pipeline status
     status: {
       type: String,
-      enum: ['uploaded', 'classified', 'extracted', 'validated', 'screened', 'scored', 'complete'],
-      default: 'uploaded',
+      enum: [
+        "uploaded",
+        "classified",
+        "extracted",
+        "validated",
+        "screened",
+        "scored",
+        "complete",
+      ],
+      default: "uploaded",
     },
   },
   {
     timestamps: true, // adds createdAt and updatedAt automatically
-  }
+  },
 );
 
-module.exports = mongoose.model('Verification', VerificationSchema);
+module.exports = mongoose.model("Verification", VerificationSchema);

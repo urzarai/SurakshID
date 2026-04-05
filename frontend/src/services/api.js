@@ -58,3 +58,6 @@ export const getWatchlistStatus = () =>
 // ─── Backend wake-up ping ─────────────────────────────────────────────────────
 export const pingBackend = () =>
   api.get('/').catch(() => null);
+
+export const clearAuditLog = () =>
+  api.delete('/api/audit/clear', { data: { confirmClear: 'CONFIRM' } });
