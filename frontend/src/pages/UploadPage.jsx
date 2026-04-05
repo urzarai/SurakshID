@@ -19,12 +19,12 @@ import {
 
 // Pipeline steps definition
 const PIPELINE_STEPS = [
-  { id: 'upload',   label: 'Upload'   },
+  { id: 'upload', label: 'Upload' },
   { id: 'classify', label: 'Classify' },
-  { id: 'extract',  label: 'Extract'  },
+  { id: 'extract', label: 'Extract' },
   { id: 'validate', label: 'Validate' },
-  { id: 'screen',   label: 'Screen'   },
-  { id: 'score',    label: 'Score'    },
+  { id: 'screen', label: 'Screen' },
+  { id: 'score', label: 'Score' },
 ];
 
 const DOCUMENT_TYPES = [
@@ -37,23 +37,23 @@ const DOCUMENT_TYPES = [
 ];
 
 export default function UploadPage() {
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const [file, setFile]               = useState(null);
-  const [dragOver, setDragOver]       = useState(false);
-  const [customerId, setCustomerId]   = useState('');
+  const [file, setFile] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [customerId, setCustomerId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);  // index of active step
   const [completedSteps, setCompletedSteps] = useState([]);
-  const [failedStep, setFailedStep]   = useState(null);
-  const [error, setError]             = useState('');
+  const [failedStep, setFailedStep] = useState(null);
+  const [error, setError] = useState('');
   const [stepMessage, setStepMessage] = useState('');
 
   // ── File handling ──────────────────────────────────────────────────────────
   const handleFile = (selectedFile) => {
     if (!selectedFile) return;
-    const allowed = ['image/jpeg','image/png','image/jpg','image/tiff','application/pdf'];
+    const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'image/tiff', 'application/pdf'];
     if (!allowed.includes(selectedFile.type)) {
       setError('Invalid file type. Please upload a JPEG, PNG, TIFF, or PDF file.');
       return;
@@ -97,7 +97,7 @@ export default function UploadPage() {
     try {
       // Step 0 — Upload + OCR
       setCurrentStep(0);
-      setStepMessage('Uploading document and running OCR...');
+      setStepMessage('Uploading document and running OCR... (this may take 1–2 minutes on first run)');
       const formData = new FormData();
       formData.append('document', file);
       if (customerId.trim()) formData.append('customerId', customerId.trim());
@@ -152,8 +152,8 @@ export default function UploadPage() {
   const getStepStatus = (index) => {
     const stepId = PIPELINE_STEPS[index].id;
     if (completedSteps.includes(stepId)) return 'completed';
-    if (currentStep === index)           return 'active';
-    if (failedStep === index)            return 'failed';
+    if (currentStep === index) return 'active';
+    if (failedStep === index) return 'failed';
     return 'pending';
   };
 
@@ -161,7 +161,7 @@ export default function UploadPage() {
   const stepIcon = (index) => {
     const status = getStepStatus(index);
     if (status === 'completed') return '✓';
-    if (status === 'failed')    return '✕';
+    if (status === 'failed') return '✕';
     return index + 1;
   };
 
@@ -337,11 +337,11 @@ export default function UploadPage() {
             <div className="info-card">
               <div className="info-card-title">What We Verify</div>
               {[
-                { icon: '🔍', title: 'OCR Extraction',     desc: 'Reads text from your document using Tesseract' },
-                { icon: '🤖', title: 'AI Classification',  desc: 'Identifies document type using Groq LLM' },
-                { icon: '✅', title: 'Field Validation',   desc: 'Checks expiry, age, PAN format, completeness' },
+                { icon: '🔍', title: 'OCR Extraction', desc: 'Reads text from your document using Tesseract' },
+                { icon: '🤖', title: 'AI Classification', desc: 'Identifies document type using Groq LLM' },
+                { icon: '✅', title: 'Field Validation', desc: 'Checks expiry, age, PAN format, completeness' },
                 { icon: '🛡️', title: 'Sanctions Screening', desc: 'Screens against OFAC and UN watchlists' },
-                { icon: '📊', title: 'Risk Scoring',       desc: 'Computes 0–100 risk score with breakdown' },
+                { icon: '📊', title: 'Risk Scoring', desc: 'Computes 0–100 risk score with breakdown' },
               ].map((item) => (
                 <div className="info-item" key={item.title}>
                   <div className="info-item-icon">{item.icon}</div>

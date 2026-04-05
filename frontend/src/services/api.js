@@ -2,7 +2,6 @@
 // Centralized Axios API client for the SurakshID frontend.
 // All backend API calls go through this file.
 // Base URL reads from the Vite environment variable VITE_API_URL.
-// Each function corresponds to one backend route.
 
 import axios from 'axios';
 
@@ -10,14 +9,14 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 60000, // 60s — OCR and LLM calls can be slow
+  timeout: 180000, // 3 minutes — OCR + LLM on Render free tier can be slow
 });
 
 // ─── Upload & Pipeline ────────────────────────────────────────────────────────
-
 export const uploadDocument = (formData) =>
   api.post('/api/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 180000,
   });
 
 export const classifyDocument = (verificationId) =>
@@ -36,7 +35,6 @@ export const scoreDocument = (verificationId) =>
   api.post('/api/score', { verificationId });
 
 // ─── Report ───────────────────────────────────────────────────────────────────
-
 export const generateReport = (verificationId) =>
   api.post(`/api/report/generate/${verificationId}`);
 
@@ -44,7 +42,6 @@ export const getReportDownloadUrl = (verificationId) =>
   `${BASE_URL}/api/report/download/${verificationId}`;
 
 // ─── Audit Log ────────────────────────────────────────────────────────────────
-
 export const getAuditLog = (params) =>
   api.get('/api/audit', { params });
 
@@ -55,10 +52,9 @@ export const getVerificationById = (verificationId) =>
   api.get(`/api/audit/${verificationId}`);
 
 // ─── Watchlist Status ─────────────────────────────────────────────────────────
-
 export const getWatchlistStatus = () =>
   api.get('/api/watchlist-status');
 
-// Pings the backend to wake it up if it has spun down on Render free tier
+// ─── Backend wake-up ping ─────────────────────────────────────────────────────
 export const pingBackend = () =>
-  api.get('/').catch(() => null); // silently ignore errors
+  api.get('/').catch(() => null);
