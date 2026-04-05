@@ -43,7 +43,13 @@ const allowedOrigins = [
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (
+      !origin ||
+      origin.endsWith('.vercel.app') ||
+      origin.startsWith('http://localhost')
+    ) {
+      return callback(null, true);
+    }
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
