@@ -1,24 +1,25 @@
 // utils/ocrUtils.js
 // Handles OCR for both image files and PDFs.
-// PDFs are converted to PNG images via pdf-poppler first,
-// then each page is OCR'd by Tesseract and joined into one string.
-// Images are passed directly to Tesseract.
+// PDFs are converted to PNG images using pdftoppm (from poppler-utils)
+// called directly via child_process — works on both Windows and Linux.
+// Each page image is then OCR'd by Tesseract and joined into one string.
 // Falls back to PSM 6 if primary extraction returns minimal text.
-// Binary paths are set based on OS — Windows uses hardcoded path,
-// Linux (Render) uses the system-installed tesseract binary.
 
 const tesseract = require('node-tesseract-ocr');
 const path      = require('path');
 const fs        = require('fs');
 const os        = require('os');
+const { execSync } = require('child_process');
 
-// On Windows use hardcoded path, on Linux let it use system PATH
-const TESSERACT_BINARY = os.platform() === 'win32'
+// ─── Binary paths ─────────────────────────────────────────────────────────────
+const IS_WIN = os.platform() === 'win32';
+
+const TESSERACT_BINARY = IS_WIN
   ? '"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"'
   : 'tesseract';
 
-const POPPLER_BIN = os.platform() === 'win32'
-  ? 'C:\\poppler\\poppler-25.12.0\\Library\\bin\\pdftoppm.exe'
+const PDFTOPPM_BINARY = IS_WIN
+  ? '"C:\\poppler\\poppler-25.12.0\\Library\\bin\\pdftoppm.exe"'
   : 'pdftoppm';
 
 const OCR_CONFIG_PRIMARY = {
@@ -48,23 +49,24 @@ const ocrImage = async (imagePath) => {
   return text;
 };
 
-// ─── Convert PDF to images then OCR each page ────────────────────────────────
+// ─── Convert PDF pages to images using pdftoppm directly ─────────────────────
 const extractTextFromPdf = async (filePath) => {
-  const { default: poppler } = await import('pdf-poppler');
+  const outputDir    = path.dirname(filePath);
+  const baseName     = path.basename(filePath, path.extname(filePath));
+  const outputPrefix = path.join(outputDir, baseName + '_page');
 
-  const outputDir = path.dirname(filePath);
-  const baseName  = path.basename(filePath, path.extname(filePath));
+  // Call pdftoppm directly via child_process
+  // -r 200 = 200 DPI resolution — good balance of quality vs speed
+  // -png   = output PNG files
+  const cmd = `${PDFTOPPM_BINARY} -r 200 -png "${filePath}" "${outputPrefix}"`;
 
-  const opts = {
-    format:     'png',
-    out_dir:    outputDir,
-    out_prefix: baseName + '_page',
-    page:       null,
-    bin:        POPPLER_BIN,
-  };
+  try {
+    execSync(cmd, { stdio: 'pipe' });
+  } catch (err) {
+    throw new Error(`pdftoppm failed: ${err.message}`);
+  }
 
-  await poppler.convert(filePath, opts);
-
+  // Collect all generated page images
   const pageImages = fs
     .readdirSync(outputDir)
     .filter((f) => f.startsWith(baseName + '_page') && f.endsWith('.png'))
@@ -75,6 +77,7 @@ const extractTextFromPdf = async (filePath) => {
     throw new Error('PDF conversion produced no images. Check Poppler installation.');
   }
 
+  // OCR each page and clean up
   const pageTexts = [];
   for (const imgPath of pageImages) {
     const text = await ocrImage(imgPath);
