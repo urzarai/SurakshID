@@ -20,7 +20,6 @@ Return exactly this structure:
   "nationality": null,
   "passportNumber": null,
   "issueDate": null,
-  "expiryDate": null,
   "gender": null,
   "placeOfBirth": null,
   "issuingCountry": null,

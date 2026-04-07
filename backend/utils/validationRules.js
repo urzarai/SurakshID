@@ -36,12 +36,11 @@ const parseDate = (dateStr) => {
 const checkExpiry = (extractedFields, documentType) => {
   const expiryFieldMap = {
     Passport: 'expiryDate',
-    'National ID': 'expiryDate',
     'Bank Statement': null, // no expiry on bank statements
   };
 
   // Document types that don't have an expiry field — auto pass
-  const noExpiryTypes = ['PAN Card', 'Utility Bill', 'Company Registration Certificate', 'Bank Statement'];
+  const noExpiryTypes = ['PAN Card', 'Utility Bill','National ID', 'Company Registration Certificate', 'Bank Statement'];
   if (noExpiryTypes.includes(documentType)) {
     return { field: 'expiryDate', status: 'pass', reason: `${documentType} does not have an expiry date.` };
   }
