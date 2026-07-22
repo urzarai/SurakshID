@@ -106,6 +106,7 @@ Regulatory-grade PDF generated with PDFKit containing:
 ---
 
 ## Project Structure
+```
 surakshid/
 ├── backend/
 │   ├── config/
@@ -153,7 +154,7 @@ surakshid/
 │   ├── main.jsx
 │   └── index.css                 # Central design system
 └── index.html
-
+```
 ---
 
 ## API Reference
